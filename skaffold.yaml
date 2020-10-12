@@ -1,0 +1,45 @@
+apiVersion: skaffold/v1
+kind: Config
+
+metadata:
+  name: acme2file
+
+build:
+  artifacts:
+    - image: farberg/acme2file
+      context: acme2file
+      docker:
+        dockerfile: Dockerfile
+
+    - image: farberg/file2dfn
+      context: file2dfn
+      docker:
+        dockerfile: Dockerfile
+
+deploy:
+  kubectl:
+    manifests:
+      - k8s/k8s-deployment.yaml
+#
+#profiles:
+#  - name: Development Profile
+#    activation:
+#      - command: dev
+#    patches:
+#      - op: replace
+#        path: /build/artifacts/0/docker/dockerfile
+#        value: Dockerfile.dev
+#      - op: replace
+#        path: /deploy/kubectl/manifests/0
+#        value: config/k8s-deployment-dev.yaml
+
+#  - name: Run Profile
+#    activation:
+#      - command: run
+#    patches:
+#      - op: replace
+#        path: /build/artifacts/0/docker/dockerfile
+#        value: Dockerfile.dev
+#      - op: replace
+#        path: /deploy/kubectl/manifests/0
+#        value: config/k8s-deployment-dev.yaml

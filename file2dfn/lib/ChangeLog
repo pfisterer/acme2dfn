@@ -1,0 +1,125 @@
+Änderungen in rel_4_0_2
+-----------------------
+- Erzeugen vom SSL-Kontext so angepasst, dass nun TLSv1.2 verwendet wird.
+
+Änderungen in rel_4_0_1
+-----------------------
+- Tests aktualisiert
+
+Änderungen in rel_4_0
+---------------------
+- Umstieg von java8 auf java11
+
+
+Änderungen in rel_3_8
+---------------------
+- Verwendung von BouncyCastle 1.60
+- Anpassungen, um Umstieg auf java9+ vorzubereiten
+- Tests ergänzt
+
+Änderungen in rel_3_7
+---------------------
+- neue Funktionen in der Registrierungsschnittstelle
+  - listExtendedDomains: Listet alle erlaubten und beantragten Domain-Einträge 
+    für die gegebene RA auf. Es werden noch weitere Domain-Informationen wie
+	die Prüfmethode und Ablaufdatum der Domain zurückgegeben.
+  - getValidationParameter: Gibt für eine Domain die möglichen Validierungsparameter
+    zurück.
+  - setValidationParameter: Ermöglicht das Setzen der Validierungparameter wie
+    Prüfmethode und E-Mail-Adresse für die Challenge-E-Mail für eine Domain.
+  - sendChallengeEMail: Sendet eine Challenge-E-Mail für einen Domain-Eintrag.
+ 
+
+- neue Datenstrukturen
+  - DFNCERTTypesExtendedDomain
+  - DFNCERTTypesValidationParameter
+  - DFNCERTTypesExtendedDomainListResult
+  - DNFCERTTypesSendChallengeEMailResult
+
+- Tests ergänzt 
+
+
+Änderungen in rel_3_6
+---------------------
+- neue Funktion in der Registrierungsschnittstelle:
+  - renewRequestSetPublishIfNeeded: Erneuert einen Zertifikatantrag und setzt
+  ggf. den Wert von Publish gemäß den Richtlinien zur Veröffentlichung von
+  Zertifikaten.
+
+- Tests ergänzt  
+
+
+Änderungen in rel_3_5
+---------------------
+
+- neue Funktion in der öffentlichen Schnittstelle:
+  - getRequestInfo: Liefert Informationen zu einem Zertifikatantrag
+
+- neue Funktion in der Registrierungsschnittstelle:
+  - searchItems2: Liefert erweitere Informationen zu Anträgen oder
+    Zertifikaten, wobei die Suche nach Rolle und/oder RA-ID eingeschränkt werden
+    kann. Diese Funktion löst searchItems, searchExtendedItems,
+    searchItemsByRole sowie searchItemsForRaID ab.
+
+Änderungen in rel_3_4
+---------------------
+
+- Tests erweitert
+
+Änderungen in rel_3_3
+---------------------
+
+- neue Funktion der Registrierungsschnittstelle:
+  - getRequestData: Gibt Antragsdaten wie den PKCS#10-Request sowie SAN-Einträgen zurück
+
+- neue Datenstruktur: 
+  - DFNCERTTypesRequestData
+
+- Beim Laden des RA-Operator-Zertifikats prüfen, ob auch die Zertifikats-Kette mit übergeben wurde.  
+
+Änderungen in rel_3_2
+---------------------
+
+- neue Funktion der öffentlichen Schnittstelle:
+  - getValidDomains: Gibt eine Liste mit allen gültigen, öffentlichen Domain-Einträgen zurück	
+
+- neue Datenstruktur:
+  - DFNCERTTypesValidDomain
+
+Änderungen in rel_3_1
+---------------------
+- javadoc verbessert
+- verschiedene Tests ergänzt
+
+Änderungen in rel_3
+-------------------
+
+- neue Funktionen der Registrierungsschnittstelle:
+  - searchItemsForRaID: Sucht Einträge aus der Datenbank für eine bestimmte RA-ID
+  - getCertificatesForDomain: Gibt eine Liste mit Zertifikat-Informationen über Zertifikate zurück,
+    die den angefragten Domain-Namen enthalten. Hierbei kann nach gültigen oder revozierten Zertifikaten
+    gesucht werden.
+  - getTLDs: Gibt die Liste der konfigurierten Top-level-domains zurück.
+  - deleteDomain2: Löscht den angegebenen Domain-Eintrag, wenn es keine gülten Zertifikate zu dieser Domain
+    gibt. Falls es noch gültige Zertifikate gibt, wird der Domain-Eintrag nicht gelöscht, sondern eine Liste
+    der gefundenen Zertifikate zurückgegeben.
+
+- neue Datenstrukturen:
+  - DFNCERTTypesDeleteDomain2Result
+  - DFNCERTTypesShortCertInfo
+
+- Bei der Erzeugung eines PKCS#10-Requests wird nun SHA256WithRSA verwendet, wenn dies vom Provider unterstützt wird.
+
+- bug fix in getPrivateKey()
+
+
+Änderungen in rel_1_9_1
+-----------------------
+
+- bug fixes in createPKCS7signed() und decryptPKCS7() bei Verwendung eines PKCS#11-Providers
+
+
+Änderungen in rel_1_9
+---------------------
+
+- Anpassung an BouncyCastle 1.52
