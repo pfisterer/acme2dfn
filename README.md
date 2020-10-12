@@ -1,6 +1,6 @@
 # ACME (aka Letsencrypt) support for DFN's PKI
 
-**This is work in progress, most things do not work fully work, syet**
+**This is work in progress, most things do not work work. To make this project work, DFN PKI requires changes (see below)**
 
 ---
 
