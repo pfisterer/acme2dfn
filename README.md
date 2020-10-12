@@ -37,6 +37,7 @@ It works as follows:
 
 # Using 
 
+## Configuration
 Create a directory structure as follows:
 
 ```console
