@@ -132,7 +132,7 @@ private/configdir/
 └── role.txt
 ```
 
-and populate the files according to [DFN PKI's](https://www.pki.dfn.de/ueberblick-dfn-pki/) documentation. 
+and populate the files according to [DFN PKI's](https://www.pki.dfn.de/ueberblick-dfn-pki/) documentation (e.g., role.txt may contain `Web Server`).
 
 Then, create config map (add `-o yaml --dry-run` to see the result only) in your Kubernetes cluster:
 
@@ -145,6 +145,14 @@ kubectl create configmap acme2file-configmap --from-file=private/configdir
 Run `skaffold dev`
 
 # Testing 
+
+## file2dfn dry-run (i.e., without accessing the SOAP API)
+
+For development, a local dry-run is supported:
+
+```bash
+java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
+```
 
 ## Run an interactive ACME test client
 

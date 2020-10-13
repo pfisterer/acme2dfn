@@ -1,4 +1,4 @@
-package de.farberg.file2dfn;
+package de.farberg.file2dfn.helpers;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.bouncycastle.asn1.pkcs.Attribute;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
@@ -23,6 +24,8 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
 public class Helper {
+	private static Logger log = getLogger(Helper.class.getName());
+
 	public static String readAsciiFile(String path) throws IOException {
 		return Files.readString(Paths.get(path), StandardCharsets.US_ASCII);
 	}
@@ -41,7 +44,7 @@ public class Helper {
 		fileWriter.flush();
 		fileWriter.close();
 	}
-	
+
 	public static File[] getFiles(File dir, String prefix, String suffix) {
 
 		File[] matchingFiles = dir.listFiles(new FilenameFilter() {
@@ -82,17 +85,25 @@ public class Helper {
 		return sans;
 	}
 
-	public static Object toPEMObject(String pem) throws Exception {		
+	public static Object toPEMObject(String pem) throws Exception {
 		PEMParser pemParser = new PEMParser(new StringReader(pem));
 		return pemParser.readObject();
 	}
-	
+
 	public static PKCS10CertificationRequest toCertificationRequest(String csr) throws Exception {
 		return (PKCS10CertificationRequest) toPEMObject(csr);
 	}
-	
+
 	public static X509CertificateHolder toCertificate(String cert) throws Exception {
-		return (X509CertificateHolder) toPEMObject(cert);
+		Object pemObject = toPEMObject(cert);
+		log.info("Parsing PEM:\n" + cert);
+		log.info("Object is: " + pemObject);
+		return (X509CertificateHolder) pemObject;
+	}
+
+	public static Logger getLogger(String name) {
+		Logger logger = Logger.getLogger(name);
+		return logger;
 	}
 
 }
