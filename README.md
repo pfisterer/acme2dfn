@@ -22,18 +22,18 @@ A Python handler script that receives incoming CSRs from acme2certifier (the ACM
 
 It works as follows:
 - Invoked by acme2certifier, it receives incoming CSRs from ACME clients (after the [challenges](https://letsencrypt.org/docs/challenge-types/) have completed)
-- Writes CSRs to a directory
-- Waits for certificates to appear in this directory 
-- Notifies acme2certifier
+- Writes CSRs to a directory **(not working yet)**
+- Waits for certificates to appear in this directory **(not working yet)**
+- Notifies acme2certifier **(not working yet)**
 
 ### file2dfn
 
 Java program for interacting with DFN's SOAP API to request certificates and to approve them.
 
 It works as follows:
-- It watches for new CSRs in the aforementioned directory (stored there by acme2file).
+- It watches for new CSRs in the aforementioned directory (stored there by acme2file). The files must have a prefix `new-` and suffix `.csr`. Everything in between is treated as an identifier used by `acme2file`.
 - Submits each CSR to the DFN SOAP server and approves them
-- Polls the SOAP server for matching certificates and stores them in the directory
+- Polls the SOAP server for matching certificates and stores them in the directory in the form `"cert-" + acmeId + ".crt"`.
 
 # Open Issues
 
