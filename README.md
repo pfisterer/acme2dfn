@@ -1,6 +1,6 @@
 # ACME (aka Letsencrypt) support for DFN's PKI
 
-**This is work in progress. To make this project work, DFN PKI requires changes (see below)**
+**This is work in progress. To make this project work, there are still some todos (see below)**
 
 ---
 
@@ -35,11 +35,77 @@ It works as follows:
 - Submits each CSR to the DFN SOAP server and approves them
 - Polls the SOAP server for matching certificates and stores them in the directory in the form `"cert-" + acmeId + ".crt"`.
 
+# Usage
+
+## Configuration
+Create a directory structure as follows:
+
+```console
+private/configdir/
+├── ca-name.txt
+├── ca.p12
+├── password.txt
+├── pin.txt
+├── ra-id.txt
+└── role.txt
+```
+
+and populate the files according to [DFN PKI's](https://www.pki.dfn.de/ueberblick-dfn-pki/) documentation (e.g., role.txt may contain `Web Server`).
+
+Then, create config map (add `-o yaml --dry-run` to see the result only) in your Kubernetes cluster:
+
+```bash
+kubectl create configmap acme2file-configmap --from-file=private/configdir 
+```
+
+## Run the ACME server
+
+Run `skaffold dev`
+
+# Testing 
+
+## file2dfn dry-run (i.e., without accessing the SOAP API)
+
+For development, a local dry-run is supported:
+
+```bash
+java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
+```
+
+## Run an interactive ACME test client
+
+Do this once:
+
+```bash
+# Create an interactive pod with certbot installed
+kubectl delete pod/certbot ; kubectl run certbot --rm -ti --image certbot/certbot -- /bin/bash
+
+# Obtain the primary IP and the pods Kubernetes DNS name
+# cf. https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records-1
+PRIMARY_IP=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
+MY_HOSTNAME="`echo $PRIMARY_IP | tr '.' '-'`.default.pod.cluster.local"
+CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone"
+
+# Register the account with the ACME server  
+certbot register "$CERTBOT_COMMON_ARGS"
+```
+
+Run repeatedly to test:
+
+```bash
+# Obtain a certificate using a standalone local server
+certbot certonly "$CERTBOT_COMMON_ARGS" --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test
+```
+
 # Open Issues
 
-Currently, DFN imposes strict requirements on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. 
+## Testing with cert-manager
 
-This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.
+This requires a Kubernetes cluster to work. Then deploy [cert-manager](https://cert-manager.io/) and set the required fields (i.e., dn) on the [Certificate](https://cert-manager.io/docs/usage/certificate/) ressource.
+
+## Certbot (missing CN and DN)
+
+Currently, DFN imposes strict requirements on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.
 
 Here is how the created CSRs look like when dumped to a file by `acme2file`. 
 
@@ -113,71 +179,7 @@ Certificate Request:
          8a:44:a6:8b
 ```
 
-This means that neither `cn` nor `dn` fields are set. Only a single `Subject Alternative Name` (SAN) entry is set.
-
-**This requires that DFN PKI must set these fields accordingly when creating the certificate. Until this is the case, this project is not developed any further.**
-
-# Usage
-
-## Configuration
-Create a directory structure as follows:
-
-```console
-private/configdir/
-├── ca-name.txt
-├── ca.p12
-├── password.txt
-├── pin.txt
-├── ra-id.txt
-└── role.txt
-```
-
-and populate the files according to [DFN PKI's](https://www.pki.dfn.de/ueberblick-dfn-pki/) documentation (e.g., role.txt may contain `Web Server`).
-
-Then, create config map (add `-o yaml --dry-run` to see the result only) in your Kubernetes cluster:
-
-```bash
-kubectl create configmap acme2file-configmap --from-file=private/configdir 
-```
-
-## Run the ACME server
-
-Run `skaffold dev`
-
-# Testing 
-
-## file2dfn dry-run (i.e., without accessing the SOAP API)
-
-For development, a local dry-run is supported:
-
-```bash
-java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
-```
-
-## Run an interactive ACME test client
-
-Do this once:
-
-```bash
-# Create an interactive pod with certbot installed
-kubectl delete pod/certbot ; kubectl run certbot --rm -ti --image certbot/certbot -- /bin/bash
-
-# Obtain the primary IP and the pods Kubernetes DNS name
-# cf. https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records-1
-PRIMARY_IP=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
-MY_HOSTNAME="`echo $PRIMARY_IP | tr '.' '-'`.default.pod.cluster.local"
-CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone"
-
-# Register the account with the ACME server  
-certbot register "$CERTBOT_COMMON_ARGS"
-```
-
-Run repeatedly to test:
-
-```bash
-# Obtain a certificate using a standalone local server
-certbot certonly "$CERTBOT_COMMON_ARGS" --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test
-```
+This means that neither `cn` nor `dn` fields are set. Only a single `Subject Alternative Name` (SAN) entry is set. Afaik, this requires that DFN PKI must set these fields accordingly when creating the certificate.
 
 ## Acknowledgement
 
