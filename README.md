@@ -72,9 +72,18 @@ For development, a local dry-run is supported:
 java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
 ```
 
-## Run an interactive ACME test client
 
-Do this once:
+# Open Issues
+
+## Testing with cert-manager
+
+This requires a Kubernetes cluster to work. Then deploy [cert-manager](https://cert-manager.io/) and set the required fields (i.e., dn) on the [Certificate](https://cert-manager.io/docs/usage/certificate/) ressource.
+
+## Testing with certbot (missing CN and DN)
+
+Currently, DFN imposes strict requirements on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.
+
+To run an interactive ACME test client, do this once:
 
 ```bash
 # Create an interactive pod with certbot installed
@@ -90,22 +99,13 @@ CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --log
 certbot register "$CERTBOT_COMMON_ARGS"
 ```
 
-Run repeatedly to test:
+and run the following command repeatedly to test:
 
 ```bash
 # Obtain a certificate using a standalone local server
 certbot certonly "$CERTBOT_COMMON_ARGS" --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test
 ```
-
-# Open Issues
-
-## Testing with cert-manager
-
-This requires a Kubernetes cluster to work. Then deploy [cert-manager](https://cert-manager.io/) and set the required fields (i.e., dn) on the [Certificate](https://cert-manager.io/docs/usage/certificate/) ressource.
-
-## Certbot (missing CN and DN)
-
-Currently, DFN imposes strict requirements on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.
+---
 
 Here is how the created CSRs look like when dumped to a file by `acme2file`. 
 
