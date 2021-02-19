@@ -1,14 +1,56 @@
+Änderungen in rel_4_3
+---------------------
+- neue Funktion der öffentlichen Schnittstelle
+ - newRequest(int RaID, String PKCS10, String[] AltNames, String Role, String Pin, 
+                    String AddName, String AddEMail, String AddOrgUnit, boolean Publish, String Subject):
+    Erstellt einen neuen Zertifikatantrag, wobei der Subject-DN separat übergeben wird. Dieser
+    übergebene Subject-DN überschreibt den Wert aus dem übergebenen PKCs#10-Request
+
+- Tests aktualisiert
+
+Änderungen in rel_4_2
+---------------------
+- neue Funtionen der Registrierungsstelle
+ - newRevocationRequest(BigInteger Serial, RevocationReason Reason): Erstellt
+    einen Sperrantrag, wobei der Sperrgrund als Typ RevocationReason übergeben wird.
+    Die bisherige Funktion newRevocationRequest(BigInteger Serial, String Reason) -
+    Übergabe des Sperrgrunds als String - ist veraltet.
+
+- neue Funktion der öffentlichen Schnittstelle
+ - newRevocationRequest(int RaID, BigInteger Serial, RevocationReason Reason, String Pin):
+    Erstellt einen Sperrantrag, wobei der Sperrgrund als Typ RevocationReason übergeben wird.
+    Die bisherige Funktion newRevocationRequest(int RaID, BigInteger Serial, String Reason, String Pin) -
+    Übergabe des Sperrgrunds als String - ist veraltet.
+
+- Tests akutalisiert
+
+Änderungen in rel_4_1
+---------------------
+- neue Funktion der Registrierungsstellee:
+ - getExtendedRevocationInfo: Liefert Informationen über einen Sperrantrag,
+    wobei auch Informationen zum Unterzeichner enthalten sind.
+
+- neue Datenstrukturen:
+ - DFNCERTTypesExtendedRevocationInfo
+
+- weitere Tests hinzugefügt 
+
+Änderungen in rel_4_0_3
+----------------------
+- Tests bzgl. Validierung von E-Mail-Domains angepasst
+
 Änderungen in rel_4_0_2
 -----------------------
-- Erzeugen vom SSL-Kontext so angepasst, dass nun TLSv1.2 verwendet wird.
+- Fehler bzgl. der Verwendung von TLSv1.2 behoben
 
 Änderungen in rel_4_0_1
 -----------------------
-- Tests aktualisiert
+- Test bzgl. Leading/trailing whitespace im CN angepasst
+
 
 Änderungen in rel_4_0
 ---------------------
-- Umstieg von java8 auf java11
+- Anpassungen an OpenJDK11
 
 
 Änderungen in rel_3_8
