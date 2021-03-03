@@ -72,26 +72,9 @@ For development, a local dry-run is supported:
 java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
 ```
 
-
-# Open Issues
-
-## Testing with cert-manager
-
-This requires a Kubernetes cluster to work. Then deploy [cert-manager](https://cert-manager.io/) and set the required fields (i.e., dn) on the [Certificate](https://cert-manager.io/docs/usage/certificate/) ressource.
-
 ## Testing with certbot
 
-Update (19.02.2021): [SOAP-Client Version 4.3](https://blog.pki.dfn.de/2021/02/soap-client-version-4-3/) provides a new SOAP API function:
-
-```Java
- newRequest(int RaID, String PKCS10, String[] AltNames,
-            String Role, String Pin, String AddName, String AddEMail,
-            String AddOrgUnit, boolean Publish,String Subject)
-```
-
-This allows providing a separate Subject-DN that overrides the one in the CSR. For details (in German), see <https://blog.pki.dfn.de/2021/02/umstellung-notwendig-aenderungen-am-soap-api/>.
-
-To run an interactive ACME test client, do this once:
+To run an interactive ACME test client in Kubernetes, use the following command:
 
 ```bash
 # Create an interactive pod with certbot installed
@@ -103,7 +86,7 @@ PRIMARY_IP=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '(
 MY_HOSTNAME="`echo $PRIMARY_IP | tr '.' '-'`.default.pod.cluster.local"
 CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone"
 
-# Register the account with the ACME server  
+# Register the account with the ACME server and obtain certificate
 rm -rf /tmp/acme ; certbot $CERTBOT_COMMON_ARGS register ; certbot $CERTBOT_COMMON_ARGS --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test certonly
 ```
 
@@ -181,9 +164,7 @@ Certificate Request:
          8a:44:a6:8b
 ```
 
-This means that neither `cn` nor `dn` fields are set. Only a single `Subject Alternative Name` (SAN) entry is set. Afaik, this requires that DFN PKI must set these fields accordingly when creating the certificate.
-
-## Acknowledgement
+## Acknowledgements
 
 Libraries used and included in this repository
 - This product includes software developed by DFN-CERT Services GmbH, Hamburg, Germany and its contributors. (cf. [SOAP-Client Version 3.8.1/4.0.2](https://blog.pki.dfn.de/2019/11/soap-client-version-3-8-1-4-0-2/))
