@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 import org.kohsuke.args4j.CmdLineException;
@@ -28,7 +30,7 @@ public class Main {
 		DfnClient dfnClient = getClient(options);
 
 		// Create Reconciler
-		Reconciler reconciler = new Reconciler(dfnClient, new File(options.csrPath));
+		Reconciler reconciler = new Reconciler(dfnClient, options);
 
 		// Run reconcile loop
 		do {
@@ -40,8 +42,13 @@ public class Main {
 	private static DfnClient getClient(CommandLineOptions options) throws Exception {
 		if (options.dryRun) {
 			prepareDryRun(options);
+		}
+
+		if (options.dryRun || "dummy".equals(options.client)) {
+			log.info("Using dummy client");
 			return new DfnClientDummy(options);
 		} else {
+			log.info("Using DFN Soap client");
 			return new DfnClientSoap(options);
 		}
 	}
@@ -61,9 +68,12 @@ public class Main {
 	}
 
 	private static CommandLineOptions parseCommandLineOptions(String[] args) throws CmdLineException {
+		log.config("Parsing command line arguments: " + Arrays.stream(args).map(el -> ("'" + el + "'")).collect(Collectors.toList()));
 		CommandLineOptions options = new CommandLineOptions();
-		CmdLineParser parser = new CmdLineParser(options);
-		parser.parseArgument(args);
+		if (args.length > 0) {
+			CmdLineParser parser = new CmdLineParser(options);
+			parser.parseArgument(args);
+		}
 		return options;
 	}
 
