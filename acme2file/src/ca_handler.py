@@ -4,109 +4,147 @@
 from __future__ import print_function
 # pylint: disable=E0401
 from acme.helper import load_config
+import subprocess
+import hashlib
 import os
 
+def banner(logger, fn):
+    logger.info(f"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
+    logger.info(f"  DFN PKI CA Handler @ {fn} ")
+
+
+def trailer(logger, fn):
+    logger.info(f"{fn}________________________")
+
+
 class CAhandler(object):
-    """ EST CA  handler """
+    """ DFN PKI CA handler """
 
     def __init__(self, _debug=None, logger=None):
         self.logger = logger
-        self.logger.debug('DfnCaHandler::__init__()')
-        self.parameter = None
+        banner(self.logger, "__init__")
+
+        # Set default parameters
+        self.shared_data_path = None
+
+        # Spawn the poller script (it checks whether it's already running)
+        subprocess.Popen(["/run_cert_poll.sh"])
+
+        trailer(self.logger, "__init__")
 
     def __enter__(self):
         """ Makes CAhandler a Context Manager """
-        if not self.parameter:
+        banner(self.logger, "__enter__")
+
+        # Load config
+        if not self.shared_data_path:
             self._config_load()
-        
-        self.logger.debug('DfnCaHandler::__enter__()')
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX __enter__")
+
+        trailer(self.logger, "__enter__")
         return self
 
     def __exit__(self, *args):
         """ close the connection at the end of the context """
-        self.logger.debug('DfnCaHandler::__exit__()')
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX __exit__")
+        banner(self.logger, "__exit__")
+        trailer(self.logger, "__exit__")
 
     def _config_load(self):
         """" load config from file """
-        self.logger.debug('DfnCaHandler::_config_load()')
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX _config_load")
+        banner(self.logger, "_config_load")
 
         config_dic = load_config(self.logger, 'CAhandler')
-        if 'parameter' in config_dic['CAhandler']:
-            self.parameter = config_dic['CAhandler']['parameter']
+        if 'shared_data_path' in config_dic['CAhandler']:
+            self.shared_data_path = config_dic['CAhandler']['shared_data_path']
+            self.logger.info(f"Using '{self.shared_data_path}' as shared data path")
 
-        self.logger.debug('DfnCaHandler_config_load() ended')
+        trailer(self.logger, "_config_load")
 
-    def _stub_func(self, parameter):
-        """" load config from file """
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX _stub_func")
-        self.logger.debug('DfnCaHandler_stub_func({0})'.format(parameter))
+    def csr_to_id(self, csr):
+        return hashlib.sha224(csr.encode()).hexdigest()
 
-        self.logger.debug('DfnCaHandler_stub_func() ended')
-
-    def enroll(self, csr):
-        """ enroll certificate  """
-        #self.logger.debug('DfnCaHandler::enroll()', csr)
-        #print("XXXXXXXXXXXXXXXXXXXXXXXXXX enroll", csr)
-
-        print("-----BEGIN CERTIFICATE REQUEST-----")
-        print(csr)
-        print("-----END CERTIFICATE REQUEST-----")
-
-        f = open("/tmp/bla.csr","w")
+    def csr_to_file(self, csr, path):
+        f = open(path, "w")
         f.write("-----BEGIN CERTIFICATE REQUEST-----\n")
         f.write(csr)
         f.write("\n")
         f.write("-----END CERTIFICATE REQUEST-----\n")
         f.close()
-        os.system("openssl req -in  /tmp/bla.csr -noout -text")
+
+    def dump_csr(self, path):
+        os.system(f"openssl req -in '{path}' -noout -text")
+
+    def enroll(self, csr):
+        """ enroll certificate  """
+        banner(self.logger, "enroll")
+
+        poll_id = self.csr_to_id(csr)
+        path = f"{self.shared_data_path}/new-{poll_id}.csr"
+
+        self.csr_to_file(csr, path)
+        self.dump_csr(path)
 
         cert_bundle = None
         error = None
         cert_raw = None
-        poll_indentifier = None
-        self._stub_func(csr)
 
-        self.logger.debug('DfnCaHandler::enroll() ended')
-
-        return(error, cert_bundle, cert_raw, poll_indentifier)
+        trailer(self.logger, "enroll")
+        return(error, cert_bundle, cert_raw, poll_id)
 
     def poll(self, cert_name, poll_identifier, _csr):
         """ poll status of pending CSR and download certificates """
-        self.logger.debug('DfnCaHandler::poll()')
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX poll", cert_name, poll_identifier, _csr)
+        banner(self.logger, "poll")
+
+        self.logger.info(f"cert_name={cert_name}, poll_identifier={poll_identifier}, _csr={_csr}")
+
+        #error - error message during cert polling (None in case no error occured)
+        #cert_bundle - certificate chain in pem format
+        #cert_raw - certificate in asn1 (binary) format - base64 encoded
+        #poll_identifier - (updated) callback identifier - will be updated in database for later lookups
+        #rejected - indicates of request has been rejected by CA admistrator - in case of a request rejection the corresponding order status will be set to "invalid" state
+
         error = None
         cert_bundle = None
         cert_raw = None
         rejected = False
-        self._stub_func(cert_name)
 
-        self.logger.debug('DfnCaHandler:poll() ended')
+        expected_cert_path = f"{self.shared_data_path}/cert-{poll_identifier}.crt"
+
+        if os.path.isfile(expected_cert_path):
+            self.logger.info(f"Found certificate for poll id {poll_identifier} @ {expected_cert_path}")
+            
+            file = open(expected_cert_path)
+            cert_pem = file.read()
+            file.close()
+
+            cert_raw = cert_pem.replace('-----BEGIN CERTIFICATE-----\n', '').replace('-----END CERTIFICATE-----\n', '').replace('\n', '')
+            cert_bundle = cert_pem
+
+        trailer(self.logger, "poll")
         return(error, cert_bundle, cert_raw, poll_identifier, rejected)
 
     def revoke(self, _cert, _rev_reason, _rev_date):
+        banner(self.logger, "revoke")
         """ revoke certificate """
-        self.logger.debug('DfnCaHandler:revoke()', _cert, _rev_reason, _rev_date)
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX revoke",_cert, _rev_reason, _rev_date)
+        self.logger.info(f'DfnCaHandler:revoke(), _cert={_cert}, _rev_reason={_rev_reason}, _rev_date={_rev_date}')
 
         code = 500
         message = 'urn:ietf:params:acme:error:serverInternal'
         detail = 'Revocation is not supported.'
 
-        self.logger.debug('DfnCaHandler::revoke() ended')
+        trailer(self.logger, "revoke")
         return(code, message, detail)
 
+    # cf. https://github.com/grindsa/acme2certifier/blob/master/docs/trigger.md
     def trigger(self, payload):
         """ process trigger message and return certificate """
-        self.logger.debug('DfnCaHandler::trigger()')
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX trigger", payload)
+        banner(self.logger, "trigger")
+        self.logger.info('DfnCaHandler::trigger()')
+
+        print(f"trigger, payload={payload}")
 
         error = None
         cert_bundle = None
         cert_raw = None
-        self._stub_func(payload)
 
-        self.logger.debug('DfnCaHandler::trigger() ended with error: {0}'.format(error))
+        trailer(self.logger, "trigger")
         return (error, cert_bundle, cert_raw)
