@@ -24,7 +24,21 @@ spec:
 
         - name: file2dfn
           image: farberg/file2dfn
-          args: ["-addName", "Testuser", "-addEMail", "test@example.com", "-addOrgUnit", "'Test Org Unit'", "-client", "dfn", "-dryrunCsrFile", "/data/conf/csr-base64.txt", "-dryrunCertFile", "/data/conf/example-cert.pem"]
+          args:
+            [
+              "-addName",
+              "Testuser",
+              "-addEMail",
+              "test@example.com",
+              "-addOrgUnit",
+              "TestOrgUnit",
+              "-client",
+              "dfn",
+              "-dryrunCsrFile",
+              "/data/conf/csr-base64.txt",
+              "-dryrunCertFile",
+              "/data/conf/example-cert.pem",
+            ]
           volumeMounts:
             - name: config-volume
               mountPath: /data/conf/

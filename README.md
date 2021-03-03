@@ -91,8 +91,6 @@ Update (19.02.2021): [SOAP-Client Version 4.3](https://blog.pki.dfn.de/2021/02/s
 
 This allows providing a separate Subject-DN that overrides the one in the CSR. For details (in German), see <https://blog.pki.dfn.de/2021/02/umstellung-notwendig-aenderungen-am-soap-api/>.
 
-~~Currently, DFN [imposes requirements](https://blog.pki.dfn.de/2015/12/openssl-csr-fuer-ein-ssl-server-zertifikat-mit-mehreren-host-namen-erzeugen/) on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.~~
-
 To run an interactive ACME test client, do this once:
 
 ```bash
@@ -106,16 +104,9 @@ MY_HOSTNAME="`echo $PRIMARY_IP | tr '.' '-'`.default.pod.cluster.local"
 CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone"
 
 # Register the account with the ACME server  
-rm -rf /tmp/acme
-certbot $CERTBOT_COMMON_ARGS register
+rm -rf /tmp/acme ; certbot $CERTBOT_COMMON_ARGS register ; certbot $CERTBOT_COMMON_ARGS --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test certonly
 ```
 
-and run the following command repeatedly to test:
-
-```bash
-# Obtain a certificate using a standalone local server
-certbot $CERTBOT_COMMON_ARGS --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test certonly
-```
 ---
 
 Here is how the created CSRs look like when dumped to a file by `acme2file`. 
