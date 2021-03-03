@@ -3,9 +3,21 @@ package de.farberg.file2dfn.client;
 import static de.farberg.file2dfn.helpers.Helper.readAsciiFile;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.logging.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+
+import de.dfncert.slight.SOAPClient;
+import de.dfncert.slight.SOAPTraceable;
 import de.dfncert.soap.DFNCERTPublic;
 import de.dfncert.soap.DFNCERTRegistration;
 import de.dfncert.soap.DFNCERTTypesExtendedObjectInfo;
@@ -29,7 +41,7 @@ public class DfnClientSoap implements DfnClient {
 
 	public DfnClientSoap(CommandLineOptions options) throws Exception {
 		this.options = options;
-		
+
 		String raIdFile = new File(options.configDir, "ra-id.txt").getCanonicalPath();
 		String p12File = new File(options.configDir, "ca.p12").getCanonicalPath();
 		String passwordFile = new File(options.configDir, "password.txt").getCanonicalPath();
@@ -37,7 +49,6 @@ public class DfnClientSoap implements DfnClient {
 		String roleFile = new File(options.configDir, "role.txt").getCanonicalPath();
 		String pinFile = new File(options.configDir, "pin.txt").getCanonicalPath();
 
-		
 		this.raId = Integer.parseInt(readAsciiFile(raIdFile));
 		this.caName = readAsciiFile(caNameFile);
 		this.password = readAsciiFile(passwordFile);
@@ -49,6 +60,43 @@ public class DfnClientSoap implements DfnClient {
 
 		this.publicClient = client.getPublic();
 		this.registrationClient = client.getRegistration();
+
+		SOAPClient.setDebug(true);
+		SOAPClient.setTraceable(new SOAPTraceable() {
+			// method to convert Document to String
+			public String doc2string(Document doc) {
+				try {
+					DOMSource domSource = new DOMSource(doc);
+					StringWriter writer = new StringWriter();
+					StreamResult result = new StreamResult(writer);
+					TransformerFactory tf = TransformerFactory.newInstance();
+					Transformer transformer = tf.newTransformer();
+					transformer.transform(domSource, result);
+					return writer.toString();
+				} catch (TransformerException ex) {
+					ex.printStackTrace();
+					return null;
+				}
+			}
+
+			@Override
+			public void traceSOAPError(HttpsURLConnection conn, String msg, Document doc, Exception e) {
+				String m ="traceSOAPError: " + msg + "(" + e + ")\n" + doc2string(doc); 
+				log.info(m.replaceAll("\n",""));
+			}
+
+			@Override
+			public void traceSOAPReceived(HttpsURLConnection conn, String msg, Document doc) {
+				String m ="traceSOAPReceived: " + msg + "\n" + doc2string(doc); 
+				log.info(m.replaceAll("\n",""));
+			}
+
+			@Override
+			public void traceSOAPSent(HttpsURLConnection conn, String msg, Document doc) {
+				String m ="traceSOAPSent: " + msg + "\n" + doc2string(doc); 
+				log.info(m.replaceAll("\n",""));
+			}
+		});
 	}
 
 	public DFNPKIClient get() {
@@ -56,18 +104,16 @@ public class DfnClientSoap implements DfnClient {
 	}
 
 	@Override
-	public int createRequest(String PKCS10, String[] AltNames, String AddName, String AddEMail, String AddOrgUnit)
-			throws Exception {
+	public int createRequest(String PKCS10, String[] AltNames, String AddName, String AddEMail, String AddOrgUnit, String subject) throws Exception {
 
-		return publicClient.newRequest(raId, PKCS10, AltNames, role, pin, AddName, AddEMail, AddOrgUnit,
-				options.publish);
+		log.info("Invoking SOAP API::newRequest with subject = " + subject);
+		return publicClient.newRequest(raId, PKCS10, AltNames, role, pin, AddName, AddEMail, AddOrgUnit, options.publish, subject);
 	}
 
 	@Override
 	public boolean approveRequest(int serialNumber) throws Exception {
 		byte rawRequestToApprove[] = registrationClient.getRawRequest(serialNumber);
-		String pkcs7Signed = Cryptography.createPKCS7Signed(rawRequestToApprove, client.getRAPrivateKey(),
-				client.getRACertificate());
+		String pkcs7Signed = Cryptography.createPKCS7Signed(rawRequestToApprove, client.getRAPrivateKey(), client.getRACertificate());
 
 		return registrationClient.approveRequest(serialNumber, rawRequestToApprove, pkcs7Signed);
 	}

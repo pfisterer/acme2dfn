@@ -7,26 +7,29 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.json.JSONObject;
 
 import de.farberg.file2dfn.client.DfnClient;
+import de.farberg.file2dfn.helpers.CommandLineOptions;
 import de.farberg.file2dfn.helpers.Helper;
 
 public class Reconciler {
 	private final static Logger log = Helper.getLogger(Reconciler.class.getName());
 	private DfnClient dfnClient;
 	private File csrPath;
+	private CommandLineOptions options;
 
-	public Reconciler(DfnClient dfnClient, File csrPath) {
+	public Reconciler(DfnClient dfnClient, CommandLineOptions options) {
 		this.dfnClient = dfnClient;
-		this.csrPath = csrPath;
+		this.csrPath = new File(options.csrPath);
+		this.options = options;
 	}
 
 	public void run() throws InterruptedException {
-
-		log.info("Reconcile loop starting");
+		// log.info("Reconcile loop starting");
 
 		// Process new CSRs
 		File[] newCsrs = Helper.getFiles(csrPath, "new-", ".csr");
@@ -64,16 +67,31 @@ public class Reconciler {
 		String[] altNames = Helper.extractSanFromCsr(certificationRequest).toArray(new String[] {});
 		log.info("Extracted AltNames: " + Arrays.toString(altNames));
 
-		// Read additional data from JSON file
+		// Set default data for the certificate request API
+		String addName = options.addName;
+		String addEMail = options.addEMail;
+		String addOrgUnit = options.addOrgUnit;
+
+		// Read additional data from JSON file (if it exists)
 		File jsonFile = new File(csr.getCanonicalPath() + ".json");
-		JSONObject data = new JSONObject(Helper.readAsciiFile(jsonFile));
-		log.info("Extracted Metadata from (" + jsonFile.getAbsolutePath() + "):" + data.toString());
-		String addName = data.getString("AddName");
-		String addEMail = data.getString("AddEMail");
-		String addOrgUnit = data.getString("AddOrgUnit");
+		if (jsonFile.exists()) {
+			JSONObject data = new JSONObject(Helper.readAsciiFile(jsonFile));
+			log.info("Extracted Metadata from (" + jsonFile.getAbsolutePath() + "):" + data.toString());
+			addName = data.getString("AddName");
+			addEMail = data.getString("AddEMail");
+			addOrgUnit = data.getString("AddOrgUnit");
+		}
+
+		// Get subject
+		String subject = extractSubject(certificationRequest);
+
+		// /C=DE/ST=<Bundesland/L=<Ort>/O=<Einrichtung>/OU=<Abteilung>/CN=<FQDN>/ emailAddress=<gültige E­Mail­Adresse des Server­Administrators>
+		// /CN=Martha Musterfrau,GN=Martha,SN=Musterfrau,O=Musterorganisation,L=Musterstadt,ST=Musterbundesland,C=DE
+		// /C=DE/ST=Baden-Wuerttemberg/L=Mannheim/O=DHBW Mannheim/OU=EDSC/CN=testserver.de/
+		String dn = "/C=DE/ST=Baden-Wuerttemberg/L=Mannheim/O=DHBW Mannheim/OU=EDSC/CN=" + subject;
 
 		// Send CSR to CA
-		int serialNumber = dfnClient.createRequest(pkcs10, altNames, addName, addEMail, addOrgUnit);
+		int serialNumber = dfnClient.createRequest(pkcs10, altNames, addName, addEMail, addOrgUnit, dn);
 		log.info("New request with serial #" + serialNumber);
 
 		// Approve the request
@@ -113,6 +131,35 @@ public class Reconciler {
 			log.info("DFN returned empty reply for serial #" + serial);
 		}
 
+	}
+
+	private String extractSubject(PKCS10CertificationRequest certificationRequest) {
+		String subject = null;
+
+		// Extract from CSR
+		X500Name x500Name = certificationRequest.getSubject();
+		if (x500Name != null) {
+			String x500NameString = x500Name.toString().trim();
+			if (x500NameString.length() > 0) {
+				log.info("Extracted subject name from CSR: '" + x500NameString + "'");
+				subject = x500NameString;
+			}
+		}
+
+		// Generate CN from first AltName (e.g., "DNS: 172-17-0-5.default.pod.cluster.local")
+		String[] altNames = Helper.extractSanFromCsr(certificationRequest).toArray(new String[] {});
+
+		if (subject == null && altNames.length > 0) {
+			String firstAltName = altNames[0];
+			String prefix = "DNS:";
+
+			if (firstAltName.startsWith(prefix)) {
+				subject = firstAltName.substring(prefix.length()).trim();
+				log.info("Extracted subject from 1st altname: '" + subject + "'");
+			}
+		}
+
+		return subject;
 	}
 
 	private static int dfnSerialFromPendingFilename(File file) throws Exception {
