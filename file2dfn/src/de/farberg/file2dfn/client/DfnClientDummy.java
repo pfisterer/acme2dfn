@@ -7,6 +7,8 @@ import de.farberg.file2dfn.helpers.Helper;
 
 public class DfnClientDummy implements DfnClient {
 
+	private static int serialNo = 1;
+
 	private CommandLineOptions options;
 
 	public DfnClientDummy(CommandLineOptions options) {
@@ -14,10 +16,10 @@ public class DfnClientDummy implements DfnClient {
 	}
 
 	@Override
-	public int createRequest(String PKCS10, String[] AltNames, String AddName, String AddEMail, String AddOrgUnit)
+	public int createRequest(String PKCS10, String[] AltNames, String AddName, String AddEMail, String AddOrgUnit, String subject)
 			throws Exception {
 
-		return 12345;
+		return serialNo++;
 	}
 
 	@Override
