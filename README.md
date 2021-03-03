@@ -10,7 +10,7 @@ Hence, this project implements the following: `ACME client <---> ACME server <--
 
 ## Overview 
 
-It is based on the ACME server implementation [acme2certifier](https://github.com/grindsa/acme2certifier) (in Python) and the SOAP client provided by DFN-CERT Services GmbH, Hamburg, Germany and its contributors. (cf. [SOAP-Client Version 3.8.1/4.0.2](https://blog.pki.dfn.de/2019/11/soap-client-version-3-8-1-4-0-2/)) written in Java. 
+It is based on the ACME server implementation [acme2certifier](https://github.com/grindsa/acme2certifier) (in Python) and the SOAP client provided by DFN-CERT Services GmbH, Hamburg, Germany and its contributors. (cf. [SOAP-Client Version 4.3](https://blog.pki.dfn.de/2021/02/soap-client-version-4-3/)) written in Java. 
 
 This project is comprised of two parts:
 - **acme2file**: A custom [ca_handler.py](https://github.com/grindsa/acme2certifier/blob/master/docs/ca_handler.md) for acme2certifier.
@@ -22,9 +22,9 @@ A Python handler script that receives incoming CSRs from acme2certifier (the ACM
 
 It works as follows:
 - Invoked by acme2certifier, it receives incoming CSRs from ACME clients (after the [challenges](https://letsencrypt.org/docs/challenge-types/) have completed)
-- Writes CSRs to a directory **(not working yet)**
-- Waits for certificates to appear in this directory **(not working yet)**
-- Notifies acme2certifier **(not working yet)**
+- Writes CSRs to a directory
+- Waits for certificates to appear in this directory
+- Notifies acme2certifier by invoking `cert_poll.py`
 
 ### file2dfn
 
