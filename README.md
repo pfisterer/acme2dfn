@@ -1,6 +1,6 @@
 # ACME (aka Letsencrypt) support for DFN's PKI
 
-**This is work in progress. To make this project work, there are still some todos (see below)**
+**This is work in progress. To make this project work, there are still some issues to solve**
 
 ---
 
@@ -79,15 +79,25 @@ java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -co
 
 This requires a Kubernetes cluster to work. Then deploy [cert-manager](https://cert-manager.io/) and set the required fields (i.e., dn) on the [Certificate](https://cert-manager.io/docs/usage/certificate/) ressource.
 
-## Testing with certbot (missing CN and DN)
+## Testing with certbot
 
-Currently, DFN imposes strict requirements on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.
+Update (19.02.2021): [SOAP-Client Version 4.3](https://blog.pki.dfn.de/2021/02/soap-client-version-4-3/) provides a new SOAP API function:
+
+```Java
+ newRequest(int RaID, String PKCS10, String[] AltNames,
+            String Role, String Pin, String AddName, String AddEMail,
+            String AddOrgUnit, boolean Publish,String Subject)
+```
+
+This allows providing a separate Subject-DN that overrides the one in the CSR. For details (in German), see <https://blog.pki.dfn.de/2021/02/umstellung-notwendig-aenderungen-am-soap-api/>.
+
+~~Currently, DFN [imposes requirements](https://blog.pki.dfn.de/2015/12/openssl-csr-fuer-ein-ssl-server-zertifikat-mit-mehreren-host-namen-erzeugen/) on different fields in CSRs that they generate certificates for. This includes restrictions on `cn` (must not be empty) and `dn`. This is an issue since ACME clients create the CSR (and sign it) and thus no data can be added to them by this proxy implementation.~~
 
 To run an interactive ACME test client, do this once:
 
 ```bash
 # Create an interactive pod with certbot installed
-kubectl delete pod/certbot ; kubectl run certbot --rm -ti --image certbot/certbot -- /bin/bash
+kubectl delete pod/certbot ; kubectl run certbot --command=true --rm -ti --image certbot/certbot -- /bin/sh
 
 # Obtain the primary IP and the pods Kubernetes DNS name
 # cf. https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records-1
@@ -96,14 +106,15 @@ MY_HOSTNAME="`echo $PRIMARY_IP | tr '.' '-'`.default.pod.cluster.local"
 CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone"
 
 # Register the account with the ACME server  
-certbot register "$CERTBOT_COMMON_ARGS"
+rm -rf /tmp/acme
+certbot $CERTBOT_COMMON_ARGS register
 ```
 
 and run the following command repeatedly to test:
 
 ```bash
 # Obtain a certificate using a standalone local server
-certbot certonly "$CERTBOT_COMMON_ARGS" --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test
+certbot $CERTBOT_COMMON_ARGS --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test certonly
 ```
 ---
 
