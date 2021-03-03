@@ -22,8 +22,24 @@ public class CommandLineOptions {
 	@Option(name = "-dryrun", usage = "Dry run only")
 	public boolean dryRun = false;
 
-	public @Option(name = "-dryrunCsrFile") String dryRunCsrFile = null;
+	@Option(name = "-dryrunCsrFile")
+	public String dryRunCsrFile = null;
 
-	public @Option(name = "-dryrunCertFile") String dryRunCertFile = null;
+	@Option(name = "-dryrunCertFile")
+	public String dryRunCertFile = null;
+
+	@Option(name = "-addName")
+	public String addName = null;
+
+	@Option(name = "-addEMail")
+	public String addEMail = null;
+
+	@Option(name = "-addOrgUnit")
+	public String addOrgUnit = null;
+
+	@Option(name = "-client")
+	public String client = "dfn";
+	
+	
 
 }
