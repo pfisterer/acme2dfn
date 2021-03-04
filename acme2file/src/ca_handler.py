@@ -4,9 +4,10 @@
 from __future__ import print_function
 # pylint: disable=E0401
 from acme.helper import load_config
-import subprocess
 import hashlib
 import os
+import base64
+
 
 def banner(logger, fn):
     logger.info(f"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
@@ -26,9 +27,6 @@ class CAhandler(object):
 
         # Set default parameters
         self.shared_data_path = None
-
-        # Spawn the poller script (it checks whether it's already running)
-        subprocess.Popen(["/run_cert_poll.sh"])
 
         trailer(self.logger, "__init__")
 
@@ -96,28 +94,18 @@ class CAhandler(object):
 
         self.logger.info(f"cert_name={cert_name}, poll_identifier={poll_identifier}, _csr={_csr}")
 
-        #error - error message during cert polling (None in case no error occured)
-        #cert_bundle - certificate chain in pem format
-        #cert_raw - certificate in asn1 (binary) format - base64 encoded
-        #poll_identifier - (updated) callback identifier - will be updated in database for later lookups
-        #rejected - indicates of request has been rejected by CA admistrator - in case of a request rejection the corresponding order status will be set to "invalid" state
+        # error - error message during cert polling (None in case no error occured)
+        # cert_bundle - certificate chain in pem format
+        # cert_raw - certificate in asn1 (binary) format - base64 encoded
+        # poll_identifier - (updated) callback identifier - will be updated in database for later lookups
+        # rejected - indicates of request has been rejected by CA admistrator - in case of a request rejection the corresponding order status will be set to "invalid" state
 
         error = None
         cert_bundle = None
         cert_raw = None
         rejected = False
 
-        expected_cert_path = f"{self.shared_data_path}/cert-{poll_identifier}.crt"
-
-        if os.path.isfile(expected_cert_path):
-            self.logger.info(f"Found certificate for poll id {poll_identifier} @ {expected_cert_path}")
-            
-            file = open(expected_cert_path)
-            cert_pem = file.read()
-            file.close()
-
-            cert_raw = cert_pem.replace('-----BEGIN CERTIFICATE-----\n', '').replace('-----END CERTIFICATE-----\n', '').replace('\n', '')
-            cert_bundle = cert_pem
+        (cert_raw, cert_bundle) = self._internal_get_cert_by_poll_id(poll_identifier)
 
         trailer(self.logger, "poll")
         return(error, cert_bundle, cert_raw, poll_identifier, rejected)
@@ -138,13 +126,28 @@ class CAhandler(object):
     def trigger(self, payload):
         """ process trigger message and return certificate """
         banner(self.logger, "trigger")
-        self.logger.info('DfnCaHandler::trigger()')
 
         print(f"trigger, payload={payload}")
+        poll_identifier = base64.b64decode(payload).decode('ascii')
 
+        (cert_raw, cert_bundle) = self._internal_get_cert_by_poll_id(poll_identifier)
         error = None
-        cert_bundle = None
-        cert_raw = None
 
         trailer(self.logger, "trigger")
         return (error, cert_bundle, cert_raw)
+
+    def _internal_get_cert_by_poll_id(self, poll_identifier):
+        expected_cert_path = f"{self.shared_data_path}/cert-{poll_identifier}.crt"
+
+        if os.path.isfile(expected_cert_path):
+            self.logger.info(f"Found certificate for poll id {poll_identifier} @ {expected_cert_path}")
+
+            file = open(expected_cert_path)
+            cert_pem = file.read()
+            file.close()
+
+            cert_raw = cert_pem.replace('-----BEGIN CERTIFICATE-----\n',
+                                        '').replace('-----END CERTIFICATE-----\n', '').replace('\n', '')
+            cert_bundle = cert_pem
+
+            return (cert_raw, cert_bundle)

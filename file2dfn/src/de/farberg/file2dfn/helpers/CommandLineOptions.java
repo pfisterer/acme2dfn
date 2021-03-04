@@ -40,6 +40,7 @@ public class CommandLineOptions {
 	@Option(name = "-client")
 	public String client = "dfn";
 	
-	
+	@Option(name = "-triggerUrl")
+	public String triggerUrl = "http://127.0.0.1:80/trigger";
 
 }

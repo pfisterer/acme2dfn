@@ -1,7 +1,12 @@
 package de.farberg.file2dfn;
 
 import java.io.File;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -18,6 +23,7 @@ import de.farberg.file2dfn.helpers.Helper;
 
 public class Reconciler {
 	private final static Logger log = Helper.getLogger(Reconciler.class.getName());
+	private final HttpClient httpClient = HttpClient.newBuilder().build();
 	private DfnClient dfnClient;
 	private File csrPath;
 	private CommandLineOptions options;
@@ -88,7 +94,7 @@ public class Reconciler {
 		// /C=DE/ST=<Bundesland/L=<Ort>/O=<Einrichtung>/OU=<Abteilung>/CN=<FQDN>/ emailAddress=<gültige E­Mail­Adresse des Server­Administrators>
 		// /CN=Martha Musterfrau,GN=Martha,SN=Musterfrau,O=Musterorganisation,L=Musterstadt,ST=Musterbundesland,C=DE
 		// /C=DE/ST=Baden-Wuerttemberg/L=Mannheim/O=DHBW Mannheim/OU=EDSC/CN=testserver.de/
-		String dn = "/C=DE/ST=Baden-Wuerttemberg/L=Mannheim/O=DHBW Mannheim/OU=EDSC/CN=" + subject;
+		String dn = "C=DE,ST=Baden-Wuerttemberg,L=Mannheim,O=DHBW Mannheim,OU=EDSC,CN=" + subject;
 
 		// Send CSR to CA
 		int serialNumber = dfnClient.createRequest(pkcs10, altNames, addName, addEMail, addOrgUnit, dn);
@@ -127,10 +133,27 @@ public class Reconciler {
 
 			log.info("Wrote certificate to file: " + newFileName);
 
+			log.info("Notifying acme2file @ trigger url " + options.triggerUrl);
+			notifyAcme2File(acmeId);
+
 		} else {
 			log.info("DFN returned empty reply for serial #" + serial);
 		}
 
+	}
+
+	private int notifyAcme2File(String acmeId) throws Exception {
+		String base64Payload = Base64.getEncoder().encodeToString(acmeId.getBytes());
+		String json = "{\"payload\":\"" + base64Payload + "\"}";
+
+		HttpRequest request = HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(json)).uri(URI.create(options.triggerUrl))
+				.header("Content-Type", "application/json").build();
+
+		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+		
+		log.info("Request for acmeID"+acmeId+" returned " + response.statusCode());
+
+		return response.statusCode();
 	}
 
 	private String extractSubject(PKCS10CertificationRequest certificationRequest) {
