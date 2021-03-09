@@ -24,7 +24,7 @@ It works as follows:
 - Invoked by acme2certifier, it receives incoming CSRs from ACME clients (after the [challenges](https://letsencrypt.org/docs/challenge-types/) have completed)
 - Writes CSRs to a directory
 - Waits for certificates to appear in this directory
-- Notifies acme2certifier by invoking `cert_poll.py`
+- Notifies acme2certifier by invoking the [trigger endpoint](https://github.com/grindsa/acme2certifier/blob/master/docs/trigger.md)
 
 ### file2dfn
 
