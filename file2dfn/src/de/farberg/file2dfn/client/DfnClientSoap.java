@@ -107,7 +107,10 @@ public class DfnClientSoap implements DfnClient {
 	public int createRequest(String PKCS10, String[] AltNames, String AddName, String AddEMail, String AddOrgUnit, String subject) throws Exception {
 
 		log.info("Invoking SOAP API::newRequest with subject = " + subject);
-		return publicClient.newRequest(raId, PKCS10, AltNames, role, pin, AddName, AddEMail, AddOrgUnit, options.publish, subject);
+		
+		String sha1Pin = Cryptography.sha1(pin.getBytes());
+		
+		return publicClient.newRequest(raId, PKCS10, AltNames, role, sha1Pin, AddName, AddEMail, AddOrgUnit, options.publish, subject);
 	}
 
 	@Override
