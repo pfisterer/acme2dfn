@@ -35,7 +35,7 @@ public class Main {
 		// Run reconcile loop
 		do {
 			reconciler.run();
-			Thread.sleep(1000);
+			Thread.sleep(5000);
 		} while (true && !options.dryRun);
 	}
 
