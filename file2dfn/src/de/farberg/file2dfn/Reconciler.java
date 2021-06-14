@@ -91,11 +91,9 @@ public class Reconciler {
 		// Get subject
 		String subject = extractSubject(certificationRequest);
 
-		// /C=DE/ST=<Bundesland/L=<Ort>/O=<Einrichtung>/OU=<Abteilung>/CN=<FQDN>/ emailAddress=<gültige E­Mail­Adresse des Server­Administrators>
-		// /CN=Martha Musterfrau,GN=Martha,SN=Musterfrau,O=Musterorganisation,L=Musterstadt,ST=Musterbundesland,C=DE
-		// /C=DE/ST=Baden-Wuerttemberg/L=Mannheim/O=DHBW Mannheim/OU=EDSC/CN=testserver.de/
-		String dn = "C=DE,ST=Baden-Wuerttemberg,L=Mannheim,O=DHBW Mannheim,OU=EDSC,CN=" + subject;
-
+		// Create DN contents (cf. https://blog.pki.dfn.de/2021/02/umstellung-notwendig-aenderungen-am-soap-api/)
+		String dn = (options.dnPrefix != null ? options.dnPrefix + "," : "")  + "CN=" + subject;
+		
 		// Send CSR to CA
 		int serialNumber = dfnClient.createRequest(pkcs10, altNames, addName, addEMail, addOrgUnit, dn);
 		log.info("New request with serial #" + serialNumber);
