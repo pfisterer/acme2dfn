@@ -38,6 +38,8 @@ spec:
               "/data/conf/csr-base64.txt",
               "-dryrunCertFile",
               "/data/conf/example-cert.pem",
+              "-dnPrefix",
+              "C=DE,ST=Bundesland,L=Stadt,O=Testinstallation Eins CA,OU=EDSC"
             ]
           volumeMounts:
             - name: config-volume

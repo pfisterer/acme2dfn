@@ -43,4 +43,7 @@ public class CommandLineOptions {
 	@Option(name = "-triggerUrl")
 	public String triggerUrl = "http://127.0.0.1:80/trigger";
 
+	@Option(name = "-dnPrefix")
+	public String dnPrefix = null;
+
 }
