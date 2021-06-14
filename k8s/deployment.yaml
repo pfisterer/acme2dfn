@@ -12,10 +12,6 @@ spec:
       labels:
         app: "acme2file"
     spec:
-      #hostAliases:
-      #  - ip: "172.17.0.12"
-      #    hostnames:
-      #      - "acme-test.cloud.dhbw-mannheim.de"
       containers:
         - name: acme2file
           image: farberg/acme2file
