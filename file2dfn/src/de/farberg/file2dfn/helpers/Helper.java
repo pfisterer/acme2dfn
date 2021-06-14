@@ -77,7 +77,7 @@ public class Helper {
 						title = "Other Name";
 					}
 
-					sans.add(title + ": " + name.getName());
+					sans.add(title + ":" + name.getName());
 				}
 			}
 		}
