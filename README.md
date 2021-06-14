@@ -1,9 +1,5 @@
 # ACME (aka Letsencrypt) support for DFN's PKI
 
-**This is work in progress. To make this project work, there are still some issues to solve**
-
----
-
 This project provides support for ACME-based certificates using the [DFN PKI](https://www.pki.dfn.de/ueberblick-dfn-pki/). The DFN PKI provides a [SOAP-based API](https://blog.pki.dfn.de/2019/04/soap-client-version-3-8-4-0-1/) for requesting and approving certificate requests. However, it currently does not support ACME clients.
 
 Hence, this project implements the following: `ACME client <---> ACME server <---> DFN PKI SOAP API`.
