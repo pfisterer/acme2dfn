@@ -84,11 +84,13 @@ kubectl delete pod/certbot ; kubectl run certbot --command=true --rm -ti --image
 # cf. https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records-1
 PRIMARY_IP=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
 MY_HOSTNAME="`echo $PRIMARY_IP | tr '.' '-'`.default.pod.cluster.local"
-CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone"
+CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --logs-dir /tmp/acme/logs --agree-tos -m bla@bla.de --server http://acme2file-service --no-eff-email --standalone --debug"
 
 # Register the account with the ACME server and obtain certificate
 rm -rf /tmp/acme ; certbot $CERTBOT_COMMON_ARGS register ; certbot $CERTBOT_COMMON_ARGS --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test certonly
 ```
+
+Edit `k8s/deployment.yaml` and set a hostalias for testing
 
 ---
 
