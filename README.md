@@ -65,7 +65,7 @@ Run `skaffold dev`
 For development, a local dry-run is supported:
 
 ```bash
-java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
+java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main -dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
 ```
 
 ## Testing with certbot
