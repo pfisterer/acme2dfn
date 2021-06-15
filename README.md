@@ -4,10 +4,6 @@ This project provides support for ACME-based certificates using the [DFN PKI](ht
 
 Hence, this project implements the following: `ACME client <---> ACME server <---> DFN PKI SOAP API`.
 
-<p align="center">
-  <img width="90%" src="demo.svg">
-</p>
-
 ## Overview 
 
 It is based on the ACME server implementation [acme2certifier](https://github.com/grindsa/acme2certifier) (in Python) and the SOAP client provided by DFN-CERT Services GmbH, Hamburg, Germany and its contributors. (cf. [SOAP-Client Version 4.3](https://blog.pki.dfn.de/2021/02/soap-client-version-4-3/)) written in Java. 
@@ -90,7 +86,14 @@ CERTBOT_COMMON_ARGS="--config-dir /tmp/acme/conf --work-dir /tmp/acme/work --log
 rm -rf /tmp/acme ; certbot $CERTBOT_COMMON_ARGS register ; certbot $CERTBOT_COMMON_ARGS --preferred-challenges http -d "$MY_HOSTNAME" --cert-name certbot-test certonly
 ```
 
-## Internal docs
+## Acknowledgements
+
+Libraries used and included in this repository
+- This product includes software developed by DFN-CERT Services GmbH, Hamburg, Germany and its contributors. (cf. [SOAP-Client Version 3.8.1/4.0.2](https://blog.pki.dfn.de/2019/11/soap-client-version-3-8-1-4-0-2/))
+- [kohsuke/args4j](https://github.com/kohsuke/args4j)
+- [Bouncycastle](https://www.bouncycastle.org/)
+
+## Internal Stuff
 
 Record asciinema in Iterm2
 - `tmux -CC new -s myrec` and resize to 150 x 40
@@ -101,10 +104,3 @@ In another shell
 - Run `asciinema rec --overwrite -i 2 -c "tmux attach -t myrec" demo.cast`
 - Detach the session in tmux: `ctrl + b + d`
 - Convert to SVG using `cat demo.cast | svg-term --out demo.svg --term iterm2 --window --profile iterm2`
-
-## Acknowledgements
-
-Libraries used and included in this repository
-- This product includes software developed by DFN-CERT Services GmbH, Hamburg, Germany and its contributors. (cf. [SOAP-Client Version 3.8.1/4.0.2](https://blog.pki.dfn.de/2019/11/soap-client-version-3-8-1-4-0-2/))
-- [kohsuke/args4j](https://github.com/kohsuke/args4j)
-- [Bouncycastle](https://www.bouncycastle.org/)
