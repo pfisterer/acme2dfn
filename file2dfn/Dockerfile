@@ -1,40 +1,29 @@
-FROM openjdk:14-alpine AS builder
+FROM maven:3-openjdk-14
 
-# Add libs and entrypoint
-ADD lib/ /app/lib/
+# Add User/Group
+#RUN addgroup -S pki
+#RUN adduser -S pki -G pki
+#RUN chown -R pki:pki /app
+#USER pki
 
 # Add source
-WORKDIR /app/src
-ADD src/ /app/src/
-
-# Compile
-RUN find . -name '*.java' -print0 | xargs -0 javac -cp $(find /app/lib -type f -iname *.jar | tr "\n" ":")
-RUN jar cfv /app/lib/file2dfn.jar de
-
-#------------------------------------------
-#------------------------------------------
-
-FROM openjdk:14-alpine
-
-# Copy app + lib jars
 WORKDIR /app
-COPY --from=builder /app/lib/ /app/
+
+# Add pom.xml local dependencies
+ADD local-maven-repo/ /app/local-maven-repo/
+ADD pom.xml /app/
+RUN mvn --no-transfer-progress dependency:go-offline
 
 # Add entrypoint
 ADD entrypoint.sh /app/
-RUN chmod a+x /app/entrypoint.sh
+RUN chmod u+x /app/entrypoint.sh
 
-# Create runtime classpath
-RUN echo $(ls /app/*.jar | tr "\n" ':') > /app/cp.txt
-RUN echo Runtime classpath is `cat /app/cp.txt`
+# Compile
+ADD src/ /app/src
+RUN mvn --no-transfer-progress package
+RUN mvn exec:java -q -Dexec.mainClass=de.farberg.file2dfn.Main -Dexec.args="-help"
 
-# Add User/Group
-RUN addgroup -S pki
-RUN adduser -S pki -G pki
-RUN chown -R pki:pki /app
-
-USER pki
-
+# Start
 VOLUME /data
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD [""]

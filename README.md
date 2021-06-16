@@ -65,7 +65,7 @@ Run `skaffold dev`
 For development, a local dry-run is supported:
 
 ```bash
-java -cp bin:$(ls -1 lib/*.jar| tr "\n" ":") de.farberg.file2dfn.Main -dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem
+(cd file2dfn ; mvn exec:java -Dexec.mainClass=de.farberg.file2dfn.Main -Dexec.args="-dryrun -configdir ../private/configdir/ -dryrunCsrFile ../private/csr-base64.txt -dryrunCertFile ../private/example-cert.pem")
 ```
 
 ## Testing with certbot
@@ -95,6 +95,8 @@ Libraries used and included in this repository
 
 ## Internal Stuff
 
+### Record asciinema
+
 Record asciinema in Iterm2
 - `tmux -CC new -s myrec` and resize to 150 x 40
 - `tmux set status off ; export PS1='${PWD/*\//}$ '`
@@ -104,3 +106,29 @@ In another shell
 - Run `asciinema rec --overwrite -i 2 -c "tmux attach -t myrec" demo.cast`
 - Detach the session in tmux: `ctrl + b + d`
 - Convert to SVG using `cat demo.cast | svg-term --out demo.svg --term iterm2 --window --profile iterm2`
+
+### Add a new version of DFN's libs
+
+These are stored in the folder `file2dfn/local-maven-repo`
+
+```bash
+# Soapclient
+mvn deploy:deploy-file \
+	-Durl=file:./local-maven-repo/ \
+	-DrepositoryId=local-maven-repo \
+	-DupdateReleaseInfo=true \
+	-DgroupId=de.dfncert \
+	-DartifactId=soapclient \
+	-Dversion=4.3 \
+	-Dfile=soapclient-4.3.jar
+
+# Utils
+mvn deploy:deploy-file \
+	-Durl=file:./local-maven-repo/ \
+	-DrepositoryId=local-maven-repo \
+	-DupdateReleaseInfo=true \
+	-DgroupId=de.dfncert \
+	-DartifactId=utils \
+	-Dversion=2.13 \
+	-Dfile=utils-2.13.jar
+```
