@@ -1,13 +1,21 @@
 package de.farberg.file2dfn;
 
+import static de.farberg.file2dfn.helpers.Helper.readFile;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.json.JSONObject;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -31,6 +39,17 @@ public class Main {
 
 		// Create DFN client
 		AuditInterface audit = getAudit(options);
+		
+		if(options.auditTest) {
+			JSONObject json = new JSONObject();
+			json.put("time", ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT ));
+			json.put("action", "auditTest");
+			json.put("message", "This message has been sent to test the audit functionality");
+			
+			audit.log("auditTest",json.toString(3));
+			System.exit(0);
+		}
+		
 		DfnClient dfnClient = getClient(audit, options);
 		
 		// Create Reconciler
@@ -58,11 +77,32 @@ public class Main {
 	}
 
 	private static AuditInterface getAudit(CommandLineOptions options) throws Exception {
+		
 		if ("smtp".equals(options.audit)) {
+			String smtpConfigFile = new File(options.configDir, "audit-smtp.json").getCanonicalPath();
+			String privateKeyFileName= new File(options.configDir, "audit-smtp-priv.pem").getCanonicalPath();
+			String publicKeyFileName = new File(options.configDir, "audit-smtp-pub.pem").getCanonicalPath();
+
+			log.info("Using SMTP audit, reading JSON config from UTF-8 file @ " + smtpConfigFile);
+			JSONObject json = new JSONObject(readFile(smtpConfigFile, StandardCharsets.UTF_8));
+
+			log.info("SMTP audit, reading key (file: "+privateKeyFileName+")and cert ("+publicKeyFileName+") as ASCII files");
 			
-			log.info("Using SMTP audit");
-			return new SmtpAudit(options.auditSmtpUsername, options.auditSmtpPassword, options.auditSmtpSmtpHost, options.auditSmtpSmtpPort,
-					options.auditSmtpSender, options.auditSmtpRecipient, options.auditSmtpSubject, options.auditSmtpText);
+			String publKey = Helper.readAsciiFile(publicKeyFileName);
+			AsymmetricKeyParameter privKey = Helper.loadPrivateKey(new FileInputStream(privateKeyFileName));
+			
+			return new SmtpAudit(
+							json.getString("Username"), 
+							json.getString("Password"), 
+							json.getString("Host"), 
+							json.getInt("Port"),
+							json.getString("Sender"), 
+							json.getString("Recipient"), 
+							json.getString("Subject"), 
+							json.getString("Text"),
+							publKey,
+							privKey
+						);
 		}
 
 		log.info("Using logging audit");

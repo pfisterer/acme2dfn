@@ -137,7 +137,7 @@ public class DfnClientSoap implements DfnClient {
 			auditJson.put("PKCS10", PKCS10);
 			auditJson.put("soapReturnCode", resultCode);
 			
-			audit.log(auditJson.toString());
+			audit.log("newRequest", auditJson.toString());
 		}
 
 		return resultCode;
@@ -161,7 +161,7 @@ public class DfnClientSoap implements DfnClient {
 			auditJson.put("serialNumber", serialNumber);
 			auditJson.put("approveRequestResult", resultCode);
 			
-			audit.log(auditJson.toString());
+			audit.log("approveRequest", auditJson.toString());
 		}
 
 		return resultCode;
@@ -185,7 +185,7 @@ public class DfnClientSoap implements DfnClient {
 				auditJson.put("publish", options.publish);
 				auditJson.put("certificatePEM", certificatePEM);
 				
-				audit.log(auditJson.toString());
+				audit.log("getCertificate", auditJson.toString());
 			}			
 			
 			// Parse certificate to ensure its valid

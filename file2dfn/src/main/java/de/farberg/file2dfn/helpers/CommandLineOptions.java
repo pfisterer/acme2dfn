@@ -54,30 +54,8 @@ public class CommandLineOptions {
 
 	@Option(name = "-audit", usage="Audit log type (one of 'logger', 'smtp')")
 	public String audit = "logger";
+	
+	@Option(name = "-auditTest", usage="Run an audit test and exit")
+	public boolean auditTest = false;
 
-	
-	@Option(name = "-auditMailUsername", usage="SMTP audit: Username")
-	public String auditSmtpUsername = "";
-	
-	@Option(name = "-auditMailPassword", usage="SMTP audit: Password")
-	public String auditSmtpPassword = "";
-	
-	@Option(name = "-auditMailSmtpHost", usage="SMTP audit: SmtpHost")
-	public String auditSmtpSmtpHost = "localhost";
-	
-	@Option(name = "-auditMailSmtpPort", usage="SMTP audit: SmtpPort")
-	public int auditSmtpSmtpPort = 25;
-	
-	@Option(name = "-auditMailSender", usage="SMTP audit: Sender")
-	public String auditSmtpSender = "";
-	
-	@Option(name = "-auditMailRecipient", usage="SMTP audit: Recipient")
-	public String auditSmtpRecipient = "";
-	
-	@Option(name = "-auditMailSubject", usage="SMTP audit: Subject")
-	public String auditSmtpSubject = "[file2dfn] Audit log message";
-	
-	@Option(name = "-auditMailText", usage="SMTP audit: Text")
-	public String auditSmtpText = "See attachment for details";
-	
 }

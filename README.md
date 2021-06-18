@@ -46,13 +46,51 @@ private/configdir/
 └── role.txt
 ```
 
-and populate the files according to [DFN PKI's](https://www.pki.dfn.de/ueberblick-dfn-pki/) documentation (e.g., role.txt may contain `Web Server`).
+and populate the files (except for `audit-smtp*`) according to [DFN PKI's](https://www.pki.dfn.de/ueberblick-dfn-pki/) documentation (e.g., role.txt may contain `Web Server`). 
 
-Then, create config map (add `-o yaml --dry-run` to see the result only) in your Kubernetes cluster:
+### Using SMTP Audit Logging
+
+To use SMTP for auditing purposes, configure command line option `-audit smtp`
+
+Add the folloging files to the configmap abouve.
+
+Set SMTP options in  `audit-smtp.json` as follows
+
+```JSON
+{
+	"Username": "...",
+	"Password": "...",
+	"Host": "...",
+	"Port": 25,
+	"Sender": "...",
+	"Recipient": "...",
+	"Subject": "[acme2file] Audit log message",
+	"Text": "See attachment."
+}
+```
+
+and create a private (`audit-smtp-priv.pem`) and public (`audit-smtp-pub.pem `) key using commands such as:
+
+```console 
+openssl genrsa -out audit-smtp-priv.pem 4096
+openssl rsa -in audit-smtp-key.pem -pubout -outform PEM -out audit-smtp-pub.pem 
+```
+
+To verify the signature in the mail, use a command similar to this:
+
+``bash
+cat audit.json | openssl dgst -sha512 -verify private/configdir/audit-smtp-pub.pem -signature signature.asc
+```
+
+### Create configuration map
+
+Then, create config map  in your Kubernetes cluster:
 
 ```bash
 kubectl create configmap acme2file-configmap --from-file=private/configdir 
 ```
+
+(add `-o yaml --dry-run` to see the result only)
 
 ## Run the ACME server
 

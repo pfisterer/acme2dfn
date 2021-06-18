@@ -1,4 +1,5 @@
 .vscode
 acme2file/src/acme_srv.db
 private
+private-*
 */bin/

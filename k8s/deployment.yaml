@@ -39,7 +39,9 @@ spec:
               "-dryrunCertFile",
               "/data/conf/example-cert.pem",
               "-dnPrefix",
-              "C=DE,ST=Bundesland,L=Stadt,O=Testinstallation Eins CA,OU=EDSC"
+              "C=DE,ST=Bundesland,L=Stadt,O=Testinstallation Eins CA,OU=EDSC",
+              "-audit",
+              "smtp",
             ]
           volumeMounts:
             - name: config-volume
