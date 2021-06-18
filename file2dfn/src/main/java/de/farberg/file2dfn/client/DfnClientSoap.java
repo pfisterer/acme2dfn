@@ -89,20 +89,20 @@ public class DfnClientSoap implements DfnClient {
 
 			@Override
 			public void traceSOAPError(HttpsURLConnection conn, String msg, Document doc, Exception e) {
-				String m ="traceSOAPError: " + msg + "(" + e + ")\n" + doc2string(doc); 
-				log.info(m.replaceAll("\n",""));
+				String m = "traceSOAPError: " + msg + "(" + e + ")\n" + doc2string(doc);
+				log.info(m.replaceAll("\n", ""));
 			}
 
 			@Override
 			public void traceSOAPReceived(HttpsURLConnection conn, String msg, Document doc) {
-				String m ="traceSOAPReceived: " + msg + "\n" + doc2string(doc); 
-				log.info(m.replaceAll("\n",""));
+				String m = "traceSOAPReceived: " + msg + "\n" + doc2string(doc);
+				log.info(m.replaceAll("\n", ""));
 			}
 
 			@Override
 			public void traceSOAPSent(HttpsURLConnection conn, String msg, Document doc) {
-				String m ="traceSOAPSent: " + msg + "\n" + doc2string(doc); 
-				log.info(m.replaceAll("\n",""));
+				String m = "traceSOAPSent: " + msg + "\n" + doc2string(doc);
+				log.info(m.replaceAll("\n", ""));
 			}
 		});
 	}
@@ -115,16 +115,16 @@ public class DfnClientSoap implements DfnClient {
 	public int createRequest(String PKCS10, String[] AltNames, String AddName, String AddEMail, String AddOrgUnit, String subject) throws Exception {
 
 		log.info("Invoking SOAP API::newRequest with subject = " + subject);
-		
+
 		String sha1Pin = Cryptography.sha1(pin.getBytes());
-		
+
 		Integer resultCode = publicClient.newRequest(this.raId, PKCS10, AltNames, role, sha1Pin, AddName, AddEMail, AddOrgUnit, options.publish, subject);
 
-		//Audit
+		// Audit
 		{
 			JSONObject auditJson = new JSONObject();
-			
-			auditJson.put("time", ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT ));
+
+			auditJson.put("time", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
 			auditJson.put("action", "newRequest");
 			auditJson.put("raId", this.raId);
 			auditJson.put("role", this.role);
@@ -136,7 +136,7 @@ public class DfnClientSoap implements DfnClient {
 			auditJson.put("subject", subject);
 			auditJson.put("PKCS10", PKCS10);
 			auditJson.put("soapReturnCode", resultCode);
-			
+
 			audit.log("newRequest", auditJson.toString());
 		}
 
@@ -149,18 +149,18 @@ public class DfnClientSoap implements DfnClient {
 		String pkcs7Signed = Cryptography.createPKCS7Signed(rawRequestToApprove, client.getRAPrivateKey(), client.getRACertificate());
 
 		Boolean resultCode = registrationClient.approveRequest(serialNumber, rawRequestToApprove, pkcs7Signed);
-		
-		//Audit
+
+		// Audit
 		{
 			JSONObject auditJson = new JSONObject();
-			
-			auditJson.put("time", ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT ));
+
+			auditJson.put("time", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
 			auditJson.put("raId", this.raId);
 			auditJson.put("role", this.role);
 			auditJson.put("action", "approveRequest");
 			auditJson.put("serialNumber", serialNumber);
 			auditJson.put("approveRequestResult", resultCode);
-			
+
 			audit.log("approveRequest", auditJson.toString());
 		}
 
@@ -174,20 +174,21 @@ public class DfnClientSoap implements DfnClient {
 		if (certificatePEM != "") {
 			log.info("DFN returned non-empty reply: \n" + certificatePEM);
 
-			//Audit
+			// Audit
 			{
 				JSONObject auditJson = new JSONObject();
-				
-				auditJson.put("time", ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT ));
+
+				auditJson.put("time", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
 				auditJson.put("action", "getCertificate");
 				auditJson.put("raId", this.raId);
 				auditJson.put("role", this.role);
+				auditJson.put("requestSerialNumber", serialNumber);
 				auditJson.put("publish", options.publish);
 				auditJson.put("certificatePEM", certificatePEM);
-				
+
 				audit.log("getCertificate", auditJson.toString());
-			}			
-			
+			}
+
 			// Parse certificate to ensure its valid
 			return certificatePEM;
 		}
