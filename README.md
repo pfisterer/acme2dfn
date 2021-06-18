@@ -78,7 +78,7 @@ openssl rsa -in audit-smtp-key.pem -pubout -outform PEM -out audit-smtp-pub.pem
 
 To verify the signature in the mail, use a command similar to this:
 
-``bash
+```bash
 cat audit.json | openssl dgst -sha512 -verify private/configdir/audit-smtp-pub.pem -signature signature.asc
 ```
 
