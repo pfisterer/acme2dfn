@@ -35,16 +35,22 @@ public class SmtpAudit implements AuditInterface {
 
 	public SmtpAudit(String username, String password, String smtpHost, int smtpPort, String sender, String recipient, String subject, String text,
 			String publKey, AsymmetricKeyParameter privKey) throws Exception {
-		mailProps.put("mail.smtp.auth", "true");
 		mailProps.put("mail.smtp.starttls.enable", "true");
 		mailProps.put("mail.smtp.host", smtpHost);
 		mailProps.put("mail.smtp.port", smtpPort);
 
-		this.authenticator = new Authenticator() {
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(username, password);
-			}
-		};
+		// Authentication
+		boolean useSmtpAuth = username != null && username.length() > 0 && 
+									 password != null && password.length() > 0;
+
+		if(useSmtpAuth) {
+			mailProps.put("mail.smtp.auth", "true");
+			this.authenticator = new Authenticator() {
+				protected PasswordAuthentication getPasswordAuthentication() {
+					return new PasswordAuthentication(username, password);
+				}
+			};
+		}
 
 		this.recipient = recipient;
 		this.sender = sender;
@@ -63,7 +69,7 @@ public class SmtpAudit implements AuditInterface {
 	@Override
 	public void log(String subject, String json) throws Exception {
 		// Setup
-		Session session = Session.getInstance(mailProps, authenticator);
+		Session session = authenticator != null ? Session.getInstance(mailProps, authenticator) : Session.getInstance(mailProps);
 		Message message = new MimeMessage(session);
 
 		// Sender and recipient
